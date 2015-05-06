@@ -23,9 +23,9 @@ from gi.repository import Gtk
 from gi.repository import Gio
 from gi.repository import Gedit
 
-class LineToolsPlugin(GObject.GObject, Gedit.WindowActivatable):
+class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 
-	__gtype_name__ = "LineToolsPlugin"
+	__gtype_name__ = "LineMoverPlugin"
 	window = GObject.property(type=Gedit.Window)
   
 	def __init__(self):
