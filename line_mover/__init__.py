@@ -88,3 +88,5 @@ class LineToolsPlugin(GObject.GObject, Gedit.WindowActivatable):
 		itstart.backward_line()
 		doc.insert(itstart, line)
 		doc.end_user_action()
+
+# ex:ts=4:
