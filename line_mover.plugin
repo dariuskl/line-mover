@@ -6,4 +6,4 @@ Name=Line Mover
 Description=Allows moving lines up and down using [Ctrl]+[↑] and [Ctrl]+[↓].
 Authors=Darius Kellermann <darius.kellermann@gmail.com>, Shaddy Zeineddine <shaddyz@users.sourceforge.net>, Marcus Lunzenauer <mlunzena@uos.de>
 Copyright=Copyright © 2015 Darius Kellermann, Shaddy Zeineddine, Marcus Lunzenauer
-Website=https://github.com/dariuskl/line_mover
+Website=https://github.com/dariuskl/line-mover
