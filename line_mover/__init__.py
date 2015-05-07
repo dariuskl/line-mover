@@ -19,6 +19,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject
+from gi.repository import Gdk
 from gi.repository import Gtk
 from gi.repository import Gio
 from gi.repository import Gedit
@@ -36,30 +37,18 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 	def do_activate(self):
 		self.kpe_handler = self.window.connect('key-press-event',
 							self.on_key_pressed)
-		self.kre_handler = self.window.connect('key-release-event',
-							self.on_key_released)
 
 	def do_deactivate(self):
 		self.window.disconnect(self.kpe_handler)
-		self.window.disconnect(self.kre_handler)
 
 	def on_key_pressed(self, widget, event):
-		if self._ctrl_pressed:
-			if event.keyval == 0xff52:
-				self.raise_line()
-			elif event.keyval == 0xff54:
-				self.lower_line()
-			else:
-				return False
-			return True
-		if (event.keyval == 0xffe3):
-			self._ctrl_pressed = True
-		return False
-
-	def on_key_released(self, widget, event):
-		if (event.keyval == 0xffe3):
-			self._ctrl_pressed = False
-		return False
+		if event.keyval == 0xff52 and event.state == Gdk.ModifierType.CONTROL_MASK:
+			self.raise_line()
+		elif event.keyval == 0xff54 and event.state == Gdk.ModifierType.CONTROL_MASK:
+			self.lower_line()
+		else:
+			return False
+		return True
 
 	def raise_line(self, action = None, param = None):
 		doc = self.window.get_active_document()
