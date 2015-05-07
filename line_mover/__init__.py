@@ -71,19 +71,43 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 		doc.move_mark(insmark, ins)
 		doc.move_mark(selmark, sel)
 
+	def swap_lines(self, doc, ln_a, ln_b):
+		"""
+			Swaps two arbitrarily positioned lines in `doc`, identified by their
+			line numbers `ln_a` resp. `ln_b`.
+		"""
+
+		doc.begin_user_action()
+
+		it_a_beg = doc.get_iter_at_line(ln_a)
+		it_a_end = doc.get_iter_at_line(ln_a)
+		if it_a_end.forward_line():
+			it_a_end.backward_char()
+		line_a = doc.get_slice(it_a_beg, it_a_end, True)
+		doc.delete(it_a_beg, it_a_end)
+
+		it_b_beg = doc.get_iter_at_line(ln_b)
+		it_b_end = doc.get_iter_at_line(ln_b)
+		it_b_end.forward_line()
+		it_b_end.backward_char()
+		line_b = doc.get_slice(it_b_beg, it_b_end, True)
+		doc.delete(it_b_beg, it_b_end)
+
+		doc.insert(it_b_beg, line_a)
+		it_a_beg = doc.get_iter_at_line(ln_a)
+		doc.insert(it_a_beg, line_b)
+
+		doc.end_user_action()
+
 	def raise_selection(self):
 		doc = self.window.get_active_document()
 		doc.begin_user_action()
 		self.store_selection(doc)
 
-		insmark = doc.get_insert()
-		selmark = doc.get_selection_bound()
-		ins = doc.get_iter_at_mark(insmark)
-		sel = doc.get_iter_at_mark(selmark)
+		ins = doc.get_iter_at_mark(doc.get_insert())
+		sel = doc.get_iter_at_mark(doc.get_selection_bound())
 		ins_ln = ins.get_line()
-		ins_ch = ins.get_line_offset()
 		sel_ln = sel.get_line()
-		sel_ch = sel.get_line_offset()
 
 		if ins_ln < sel_ln:
 			base_ln = ins_ln
@@ -92,32 +116,12 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 			base_ln = sel_ln
 			diff = ins_ln - sel_ln
 
+		if base_ln == 0:
+			doc.end_user_action()
+			return
+
 		for l in range(0, diff + 1):
-			# get previous line without breaks
-			pv_beg = doc.get_iter_at_line(base_ln + l)
-			if not pv_beg.backward_line():
-				# first line
-				doc.end_user_action()
-				return
-			pv_end = doc.get_iter_at_line(base_ln + l)
-			pv_end.set_line_offset(0)
-			pv_end.backward_char()
-			pv = doc.get_slice(pv_beg, pv_end, True)
-			doc.delete(pv_beg, pv_end)
-
-			# get current line without breaks
-			ln_beg = doc.get_iter_at_line(base_ln + l)
-			ln_beg.set_line_offset(0)
-			ln_end = doc.get_iter_at_line(base_ln + l)
-			if ln_end.forward_line():
-				# only if it is not the last line, because that is lacking a char
-				ln_end.backward_char()
-			ln = doc.get_slice(ln_beg, ln_end, True)
-			doc.delete(ln_beg, ln_end)
-
-			doc.insert(ln_beg, pv)
-			ln_beg.backward_line()
-			doc.insert(ln_beg, ln)
+			self.swap_lines(doc, base_ln + l - 1, base_ln + l)
 
 		self.restore_selection(doc, -1)
 		doc.end_user_action()
@@ -127,48 +131,24 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 		doc.begin_user_action()
 		self.store_selection(doc)
 
-		insmark = doc.get_insert()
-		selmark = doc.get_selection_bound()
-		ins = doc.get_iter_at_mark(insmark)
-		sel = doc.get_iter_at_mark(selmark)
+		ins = doc.get_iter_at_mark(doc.get_insert())
+		sel = doc.get_iter_at_mark(doc.get_selection_bound())
 		ins_ln = ins.get_line()
-		ins_ch = ins.get_line_offset()
 		sel_ln = sel.get_line()
-		sel_ch = sel.get_line_offset()
 
 		if ins_ln < sel_ln:
-			base_ln = ins_ln
+			base_ln = sel_ln
 			diff = sel_ln - ins_ln
 		else:
-			base_ln = sel_ln
+			base_ln = ins_ln
 			diff = ins_ln - sel_ln
 
-		for l in range(diff, -1, -1):
-			# get next line without breaks
-			nx_beg = doc.get_iter_at_line(base_ln + l)
-			if not nx_beg.forward_line():
-				# last line
-				doc.end_user_action()
-				return
-			nx_end = doc.get_iter_at_line(base_ln + l)
-			nx_end.forward_line()
-			if nx_end.forward_line():
-				nx_end.backward_char()
-			nx = doc.get_slice(nx_beg, nx_end, True)
-			doc.delete(nx_beg, nx_end)
+		if base_ln == doc.get_line_count() - 1:
+			doc.end_user_action()
+			return
 
-			# get current line without breaks
-			ln_beg = doc.get_iter_at_line(base_ln + l)
-			ln_beg.set_line_offset(0)
-			ln_end = doc.get_iter_at_line(base_ln + l)
-			ln_end.forward_line()
-			ln_end.backward_char()
-			ln = doc.get_slice(ln_beg, ln_end, True)
-			doc.delete(ln_beg, ln_end)
-
-			doc.insert(ln_beg, nx)
-			ln_beg.forward_line()
-			doc.insert(ln_beg, ln)
+		for l in range(0, diff + 1):
+			self.swap_lines(doc, base_ln - l + 1, base_ln - l)
 
 		self.restore_selection(doc, 1)
 		doc.end_user_action()
