@@ -43,9 +43,9 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 
 	def on_key_pressed(self, widget, event):
 		if event.keyval == 0xff52 and event.state == Gdk.ModifierType.CONTROL_MASK:
-			self.raise_line()
+			self.raise_selection()
 		elif event.keyval == 0xff54 and event.state == Gdk.ModifierType.CONTROL_MASK:
-			self.lower_line()
+			self.lower_selection()
 		else:
 			return False
 		return True
@@ -71,74 +71,104 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 		doc.move_mark(insmark, ins)
 		doc.move_mark(selmark, sel)
 
-	def raise_line(self):
+	def raise_selection(self):
 		doc = self.window.get_active_document()
 		doc.begin_user_action()
 		self.store_selection(doc)
 
 		insmark = doc.get_insert()
+		selmark = doc.get_selection_bound()
+		ins = doc.get_iter_at_mark(insmark)
+		sel = doc.get_iter_at_mark(selmark)
+		ins_ln = ins.get_line()
+		ins_ch = ins.get_line_offset()
+		sel_ln = sel.get_line()
+		sel_ch = sel.get_line_offset()
 
-		# get previous line without breaks
-		pv_beg = doc.get_iter_at_mark(insmark)
-		if not pv_beg.backward_line():
-			# first line
-			doc.end_user_action()
-			return
-		pv_end = doc.get_iter_at_mark(insmark)
-		pv_end.set_line_offset(0)
-		pv_end.backward_char()
-		pv = doc.get_slice(pv_beg, pv_end, True)
-		doc.delete(pv_beg, pv_end)
+		if ins_ln < sel_ln:
+			base_ln = ins_ln
+			diff = sel_ln - ins_ln
+		else:
+			base_ln = sel_ln
+			diff = ins_ln - sel_ln
 
-		# get current line without breaks
-		ln_beg = doc.get_iter_at_mark(insmark)
-		ln_beg.set_line_offset(0)
-		ln_end = doc.get_iter_at_mark(insmark)
-		if ln_end.forward_line():
-			# only if it is not the last line, because that is lacking a char
-			ln_end.backward_char()
-		ln = doc.get_slice(ln_beg, ln_end, True)
-		doc.delete(ln_beg, ln_end)
+		for l in range(0, diff + 1):
+			# get previous line without breaks
+			pv_beg = doc.get_iter_at_line(base_ln + l)
+			if not pv_beg.backward_line():
+				# first line
+				doc.end_user_action()
+				return
+			pv_end = doc.get_iter_at_line(base_ln + l)
+			pv_end.set_line_offset(0)
+			pv_end.backward_char()
+			pv = doc.get_slice(pv_beg, pv_end, True)
+			doc.delete(pv_beg, pv_end)
 
-		doc.insert(ln_beg, pv)
-		ln_beg.backward_line()
-		doc.insert(ln_beg, ln)
+			# get current line without breaks
+			ln_beg = doc.get_iter_at_line(base_ln + l)
+			ln_beg.set_line_offset(0)
+			ln_end = doc.get_iter_at_line(base_ln + l)
+			if ln_end.forward_line():
+				# only if it is not the last line, because that is lacking a char
+				ln_end.backward_char()
+			ln = doc.get_slice(ln_beg, ln_end, True)
+			doc.delete(ln_beg, ln_end)
+
+			doc.insert(ln_beg, pv)
+			ln_beg.backward_line()
+			doc.insert(ln_beg, ln)
 
 		self.restore_selection(doc, -1)
 		doc.end_user_action()
 
-	def lower_line(self):
+	def lower_selection(self):
 		doc = self.window.get_active_document()
 		doc.begin_user_action()
 		self.store_selection(doc)
 
 		insmark = doc.get_insert()
+		selmark = doc.get_selection_bound()
+		ins = doc.get_iter_at_mark(insmark)
+		sel = doc.get_iter_at_mark(selmark)
+		ins_ln = ins.get_line()
+		ins_ch = ins.get_line_offset()
+		sel_ln = sel.get_line()
+		sel_ch = sel.get_line_offset()
 
-		# get next line without breaks
-		nx_beg = doc.get_iter_at_mark(insmark)
-		if not nx_beg.forward_line():
-			# last line
-			doc.end_user_action()
-			return
-		nx_end = doc.get_iter_at_mark(insmark)
-		nx_end.forward_line()
-		if nx_end.forward_line():
-			nx_end.backward_char()
-		nx = doc.get_slice(nx_beg, nx_end, True)
-		doc.delete(nx_beg, nx_end)
+		if ins_ln < sel_ln:
+			base_ln = ins_ln
+			diff = sel_ln - ins_ln
+		else:
+			base_ln = sel_ln
+			diff = ins_ln - sel_ln
 
-		# get current line without breaks
-		ln_beg = doc.get_iter_at_mark(insmark)
-		ln_beg.set_line_offset(0)
-		ln_end = doc.get_iter_at_mark(insmark)
-		ln_end.forward_line()
-		ln_end.backward_char()
-		ln = doc.get_slice(ln_beg, ln_end, True)
-		doc.delete(ln_beg, ln_end)
+		for l in range(diff, -1, -1):
+			# get next line without breaks
+			nx_beg = doc.get_iter_at_line(base_ln + l)
+			if not nx_beg.forward_line():
+				# last line
+				doc.end_user_action()
+				return
+			nx_end = doc.get_iter_at_line(base_ln + l)
+			nx_end.forward_line()
+			if nx_end.forward_line():
+				nx_end.backward_char()
+			nx = doc.get_slice(nx_beg, nx_end, True)
+			doc.delete(nx_beg, nx_end)
 
-		doc.insert(ln_beg, nx)
-		ln_beg.forward_line()
-		doc.insert(ln_beg, ln)
+			# get current line without breaks
+			ln_beg = doc.get_iter_at_line(base_ln + l)
+			ln_beg.set_line_offset(0)
+			ln_end = doc.get_iter_at_line(base_ln + l)
+			ln_end.forward_line()
+			ln_end.backward_char()
+			ln = doc.get_slice(ln_beg, ln_end, True)
+			doc.delete(ln_beg, ln_end)
+
+			doc.insert(ln_beg, nx)
+			ln_beg.forward_line()
+			doc.insert(ln_beg, ln)
 
 		self.restore_selection(doc, 1)
 		doc.end_user_action()
