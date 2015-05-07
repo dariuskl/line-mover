@@ -1,5 +1,5 @@
 # -*- coding: utf8 -*-
-#  Line Tools Plugin
+#  Line Mover Plugin
 #
 #  Copyright (C) 2015 Darius Kellermann <darius.kellermann@gmail.com>
 #  Copyright (C) 2007 Shaddy Zeineddine <shaddyz@users.sourceforge.net>

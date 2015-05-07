@@ -1,11 +1,12 @@
 Line Mover
 ==========
 
-A simple plugin that allows moving lines up and down using `Ctrl`+`↑` and
-`Ctrl`+`↓`.
+A simple plugin that allows moving the currently selected lines up and down
+using `Ctrl`+`↑` and `Ctrl`+`↓`.
 
-This is derived from [a plugin] [0] that featured more functionality, but was
-written for Gedit 2 and has not been updated by now.
+This is derived from [a plugin] [0] that featured more functionality (deleting
+and copying lines for instance), but was written for Gedit 2 and has not been
+updated by now.
 
 
 Installation
