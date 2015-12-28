@@ -32,7 +32,6 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 	def __init__(self):
 		GObject.GObject.__init__(self)
 		self.window = None
-		self._ctrl_pressed = False
 
 	def do_activate(self):
 		self.kpe_handler = self.window.connect('key-press-event',
@@ -42,15 +41,11 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 		self.window.disconnect(self.kpe_handler)
 
 	def on_key_pressed(self, widget, event):
-		event.state = event.state & (Gdk.ModifierType.SHIFT_MASK
-				| Gdk.ModifierType.LOCK_MASK | Gdk.ModifierType.CONTROL_MASK
-				| Gdk.ModifierType.MOD1_MASK | Gdk.ModifierType.MOD2_MASK
-				| Gdk.ModifierType.MOD3_MASK | Gdk.ModifierType.MOD4_MASK
-				| Gdk.ModifierType.MOD5_MASK | Gdk.ModifierType.SUPER_MASK
-				| Gdk.ModifierType.HYPER_MASK | Gdk.ModifierType.META_MASK)
-		if event.keyval == 0xff52 and event.state == Gdk.ModifierType.CONTROL_MASK:
+		defmod = Gtk.accelerator_get_default_mod_mask() & event.state
+
+		if event.keyval == 0xff52 and defmod == Gdk.ModifierType.CONTROL_MASK:
 			self.raise_selection()
-		elif event.keyval == 0xff54 and event.state == Gdk.ModifierType.CONTROL_MASK:
+		elif event.keyval == 0xff54 and defmod == Gdk.ModifierType.CONTROL_MASK:
 			self.lower_selection()
 		else:
 			return False
