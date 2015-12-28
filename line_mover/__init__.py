@@ -89,8 +89,8 @@ class LineMoverPlugin(GObject.GObject, Gedit.WindowActivatable):
 
 		it_b_beg = doc.get_iter_at_line(ln_b)
 		it_b_end = doc.get_iter_at_line(ln_b)
-		it_b_end.forward_line()
-		it_b_end.backward_char()
+		while not it_b_end.ends_line():
+			it_b_end.forward_char()
 		line_b = doc.get_slice(it_b_beg, it_b_end, True)
 		doc.delete(it_b_beg, it_b_end)
 
