@@ -1,3 +1,5 @@
+*Gedit can do this natively nowadays, making this plugin obsolete.*
+
 Line Mover
 ==========
 
